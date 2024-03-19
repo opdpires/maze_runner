@@ -43,8 +43,6 @@ pos_t load_maze(const char* file_name) {
 	pos_t initial_pos;
 	char maze_element;
 
-	initial_pos.i = 1;
-	initial_pos.j = 1;
 	// Abre o arquivo para leitura (fopen)
 	FILE * maze_file = fopen(file_name, "r");
 
@@ -95,6 +93,11 @@ bool walk(pos_t pos) {
 	pos_atual.i = pos.i;
 	pos_atual.j = pos.j;
 
+	if (maze[pos_atual.i][pos_atual.j+1] == 'x')
+	if (maze[pos_atual.i][pos_atual.j-1] == 'x')
+	if (maze[pos_atual.i+1][pos_atual.j] == 'x')
+	if (maze[pos_atual.i-1][pos_atual.j] == 'x')
+
 	// Repita até que a saída seja encontrada ou não existam mais posições não exploradas
 	while(maze[pos_atual.i][pos_atual.j] != 's' && !valid_positions.empty()){
 		// Marcar a posição atual com o símbolo 'o'
@@ -103,6 +106,8 @@ bool walk(pos_t pos) {
 		system("clear");
 		// Imprime o labirinto
 		print_maze();
+	}
+	return true;
 		/* Dado a posição atual, verifica quais sao as próximas posições válidas
 			Checar se as posições abaixo são validas (i>0, i<num_rows, j>0, j <num_cols)
 		 	e se são posições ainda não visitadas (ou seja, caracter 'x') e inserir
@@ -119,13 +124,13 @@ bool walk(pos_t pos) {
 		// Verifica se a pilha de posições nao esta vazia 
 		//Caso não esteja, pegar o primeiro valor de  valid_positions, remove-lo e chamar a funçao walk com esse valor
 		// Caso contrario, retornar falso
-		if (!valid_positions.empty()) {
+		/*if (!valid_positions.empty()) {
 			pos_t next_position = valid_positions.top();
 			valid_positions.pop();
 		}
 		else{
 			return false;
-		}
+		}*/
 }
 
 int main(int argc, char* argv[]) {
@@ -135,15 +140,22 @@ int main(int argc, char* argv[]) {
 	pos_t initial_pos = load_maze("../data/maze2.txt");
 
 	// chamar a função de navegação
-	//bool exit_found = walk(initial_pos);
+	bool exit_found = walk(initial_pos);
 	
 	// Tratar o retorno (imprimir mensagem)
-	print_maze();
+	if (exit_found){
+		print_maze();
+		printf("\nSaida encontrada!\n");
+	}
+	else{
+		system("clear");
+		printf("\nSaida não encontrada!\n");
+	}
 
 	// libera a memória da matriz
 	for (int i = 0; i < num_rows; i++)
 		free (maze[i]) ;
-	free (maze) ;
+	free (maze);
 
 	return 0;
 }
