@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stack>
+#include <unistd.h>
 
 #include <iostream>
 #include <cstring>
@@ -88,49 +89,78 @@ void print_maze() {
 // Função responsável pela navegação.
 // Recebe como entrada a posição inicial e retorna um booleano indicando se a saída foi encontrada
 bool walk(pos_t pos) {
-	pos_t pos_atual;
+	sleep(1);
+	if (maze[pos.i][pos.j] == 's')
+		return true;
+	// Marcar a posição atual com o símbolo 'o'
+	maze[pos.i][pos.j] = 'o';
+	// Limpa a tela
+	system("clear");
+	// Imprime o labirinto
+	print_maze();
 
-	pos_atual.i = pos.i;
-	pos_atual.j = pos.j;
+	/*  Dada a posição atual, verifica quais sao as próximas posições válidas
+		Checar se as posições abaixo são validas (i>0, i<num_rows, j>0, j <num_cols)
+		e se são posições ainda não visitadas (ou seja, caracter 'x') e inserir
+		cada uma delas no vetor valid_positions
+			- pos.i, pos.j+1
+			- pos.i, pos.j-1
+			- pos.i+1, pos.j
+			- pos.i-1, pos.j
+		Caso alguma das posições válidas seja igual a 's', retornar verdadeiro
+	*/
+	pos_t valid_pos;
+	valid_pos.i = pos.i;
+	valid_pos.j = pos.j;
 
-	if (maze[pos_atual.i][pos_atual.j+1] == 'x')
-	if (maze[pos_atual.i][pos_atual.j-1] == 'x')
-	if (maze[pos_atual.i+1][pos_atual.j] == 'x')
-	if (maze[pos_atual.i-1][pos_atual.j] == 'x')
-
-	// Repita até que a saída seja encontrada ou não existam mais posições não exploradas
-	while(maze[pos_atual.i][pos_atual.j] != 's' && !valid_positions.empty()){
-		// Marcar a posição atual com o símbolo 'o'
-		maze[pos_atual.i][pos_atual.j] = 'o';
-		// Limpa a tela
-		system("clear");
-		// Imprime o labirinto
-		print_maze();
-	}
-	return true;
-		/* Dado a posição atual, verifica quais sao as próximas posições válidas
-			Checar se as posições abaixo são validas (i>0, i<num_rows, j>0, j <num_cols)
-		 	e se são posições ainda não visitadas (ou seja, caracter 'x') e inserir
-		 	cada uma delas no vetor valid_positions
-		 		- pos.i, pos.j+1
-		 		- pos.i, pos.j-1
-		 		- pos.i+1, pos.j
-		 		- pos.i-1, pos.j
-		 	Caso alguma das posições válidas seja igual a 's', retornar verdadeiro
-	 	*/
-
-		
-	
-		// Verifica se a pilha de posições nao esta vazia 
-		//Caso não esteja, pegar o primeiro valor de  valid_positions, remove-lo e chamar a funçao walk com esse valor
-		// Caso contrario, retornar falso
-		/*if (!valid_positions.empty()) {
-			pos_t next_position = valid_positions.top();
-			valid_positions.pop();
+	if (pos.j+1 < num_cols){
+		if (maze[pos.i][pos.j+1] == 's')
+			return true;
+		if (maze[pos.i][pos.j+1] == 'x'){
+			valid_pos.i = pos.i;
+			valid_pos.j = pos.j+1;
+			valid_positions.push(valid_pos);
 		}
-		else{
-			return false;
-		}*/
+	}
+
+	if (pos.j-1 >= 0){
+		if (maze[pos.i][pos.j-1] == 's')
+			return true;
+		if (maze[pos.i][pos.j-1] == 'x'){
+			valid_pos.i = pos.i;
+			valid_pos.j = pos.j-1;
+			valid_positions.push(valid_pos);
+		}
+	}
+
+	if (pos.i+1 < num_rows){
+		if (maze[pos.i+1][pos.j] == 's')
+			return true;
+		if (maze[pos.i+1][pos.j] == 'x'){
+			valid_pos.i = pos.i+1;
+			valid_pos.j = pos.j;
+			valid_positions.push(valid_pos);
+		}
+	}
+
+	if (pos.i-1 >= 0){
+		if (maze[pos.i-1][pos.j] == 's')
+			return true;
+		if(maze[pos.i-1][pos.j] == 'x'){
+			valid_pos.i = pos.i-1;
+			valid_pos.j = pos.j;
+			valid_positions.push(valid_pos);
+		}
+	}
+
+	if (!valid_positions.empty()) {
+		pos_t valid_position = valid_positions.top();
+		valid_positions.pop();
+		walk(valid_position);
+	}
+	else{
+		return false;
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -144,11 +174,13 @@ int main(int argc, char* argv[]) {
 	
 	// Tratar o retorno (imprimir mensagem)
 	if (exit_found){
+		system("clear");
 		print_maze();
 		printf("\nSaida encontrada!\n");
 	}
 	else{
 		system("clear");
+		print_maze();
 		printf("\nSaida não encontrada!\n");
 	}
 
