@@ -103,7 +103,7 @@ void walk(pos_t pos) {
 	*/ 
 	if(maze[pos.i][pos.j] != 'e'){
 		maze[pos.i][pos.j] = '.';
-	
+	}
 	// Avalia a posição à direita
 	if (pos.j+1 < num_cols){
 		m.lock();
@@ -193,8 +193,9 @@ int main(int argc, char* argv[]) {
 		no_exit = (exit_found == 0 && num_threads == 0);
 	}
 
-	if (exit_found)
+	if (exit_found){
 		printf("\nSaida encontrada!\n");
+	}
 	else{
 		printf("\nSaida não encontrada!\n");
 	}
