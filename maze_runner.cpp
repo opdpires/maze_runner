@@ -1,22 +1,16 @@
-#include <stdio.h>
 #include <stack>
 #include <chrono>
 #include <iostream>
-#include <cstring>
-#include <vector>
 #include <thread>
 #include <mutex>
-#include <atomic>
 
 using namespace std;
 
-mutex m;
+mutex mutex_object;
 
-//std::vector<std::thread> thread_vector;
-
-int exit_found = 0;
+int num_exit_found = 0;
 bool no_exit = false;
-int num_threads_global = 0;
+int num_threads = 0;
 
 // Matriz de char representnado o labirinto
 char** maze; // Voce também pode representar o labirinto como um vetor de vetores de char (vector<vector<char>>)
@@ -77,16 +71,15 @@ void print_maze() {
 	}
 }
 
-
 // Função responsável pela navegação.
 // Recebe como entrada a posição inicial e retorna um booleano indicando se a saída foi encontrada
 void walk(pos_t pos) {
 	// Incrementa o número de threads existentes
-	m.lock();
-	num_threads_global++; 
-	m.unlock();
+	mutex_object.lock();
+	num_threads++; 
+	mutex_object.unlock();
 
-	exit_found +=int(maze[pos.i][pos.j] == 's');
+	num_exit_found +=int(maze[pos.i][pos.j] == 's');
 
 	// Posicao a ser empilhada
 	pos_t valid_pos;
@@ -106,54 +99,54 @@ void walk(pos_t pos) {
 	}
 	// Avalia a posição à direita
 	if (pos.j+1 < num_cols){
-		m.lock();
-		exit_found += int(maze[pos.i][pos.j+1] == 's');
+		mutex_object.lock();
+		num_exit_found += int(maze[pos.i][pos.j+1] == 's');
 		if (maze[pos.i][pos.j+1] == 'x'){
 			maze[pos.i][pos.j+1] = 'o';
 			valid_pos.i = pos.i;
 			valid_pos.j = pos.j+1;
 			valid_positions.push(valid_pos);
 		}
-		m.unlock();
+		mutex_object.unlock();
 	}
 
 	// Avalia a posição à esquerda
 	if (pos.j-1 >= 0){
-		m.lock();
-		exit_found += int(maze[pos.i][pos.j+1] == 's');
+		mutex_object.lock();
+		num_exit_found += int(maze[pos.i][pos.j+1] == 's');
 		if (maze[pos.i][pos.j-1] == 'x'){
 			maze[pos.i][pos.j-1] = 'o';
 			valid_pos.i = pos.i;
 			valid_pos.j = pos.j-1;
 			valid_positions.push(valid_pos);
 		}
-		m.unlock();
+		mutex_object.unlock();
 	}
 
 	// Avalia a posição acima
 	if (pos.i+1 < num_rows){
-		m.lock();
-		exit_found += int(maze[pos.i][pos.j+1] == 's');
+		mutex_object.lock();
+		num_exit_found += int(maze[pos.i][pos.j+1] == 's');
 		if (maze[pos.i+1][pos.j] == 'x'){
 			maze[pos.i+1][pos.j] = 'o';
 			valid_pos.i = pos.i+1;
 			valid_pos.j = pos.j;
 			valid_positions.push(valid_pos);
 		}
-		m.unlock();
+		mutex_object.unlock();
 	}
 
 	// Avalia a posição abaixo
 	if (pos.i-1 >= 0){
-		exit_found += int(maze[pos.i][pos.j+1] == 's');
-		m.lock();
+		num_exit_found += int(maze[pos.i][pos.j+1] == 's');
+		mutex_object.lock();
 		if(maze[pos.i-1][pos.j] == 'x'){
 			maze[pos.i-1][pos.j] = 'o';
 			valid_pos.i = pos.i-1;
 			valid_pos.j = pos.j;
 			valid_positions.push(valid_pos);
 		}
-		m.unlock();
+		mutex_object.unlock();
 	}
 
 	this_thread::sleep_for(chrono::milliseconds(100));
@@ -167,40 +160,37 @@ void walk(pos_t pos) {
 	}
 
 	// Decrementa o número de threads existentes
-	m.lock();
-	num_threads_global--;
-	m.unlock();
+	mutex_object.lock();
+	num_threads--;
+	mutex_object.unlock();
 }
 
 int main(int argc, char* argv[]) {
 	// carregar o labirinto com o nome do arquivo recebido como argumento
 	system("clear");
-	
-	int num_threads = 0;
 
-	pos_t initial_pos = load_maze("../data/maze2.txt");
+	pos_t initial_pos = load_maze("../data/maze5.txt");
 
 	// chamar a função de navegação
 	std::thread main_walk(walk, initial_pos);
 	main_walk.detach();
 	
 	// Tratar o retorno (imprimir mensagem)
-	while (exit_found==0 && !no_exit){
+	while (num_exit_found==0 && !no_exit){
 		this_thread::sleep_for(chrono::milliseconds(100));
 		system("clear");
 		print_maze();
-		num_threads = num_threads_global; // Para Testes
-		no_exit = (exit_found == 0 && num_threads == 0);
+		no_exit = (num_exit_found == 0 && num_threads == 0);
 	}
 
-	if (exit_found){
+	if (num_exit_found > 0){
 		printf("\nSaida encontrada!\n");
 	}
 	else{
 		printf("\nSaida não encontrada!\n");
 	}
 
-	// libera a memória da matriz
+	// Libera a memória da matriz
 	for (int i = 0; i < num_rows; i++)
 		free (maze[i]) ;
 	free (maze);
